@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Naija Shield Academy ISC2 Certified in Cybersecurity practice portal with chapter gating, scoring, and futuristic study UI." />
+  <title>Naija Shield Academy | ISC2 Certified in Cybersecurity Practice</title>
+  <link rel="icon" href="Image/Preview.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero-panel">
+      <div class="brand-block">
+        <img class="brand-logo" src="Image/Preview.png" alt="Naija Shield Academy Logo" />
+        <div>
+          <p class="eyebrow">Naija Shield Academy</p>
+          <h1>ISC2 Certified in Cybersecurity Practice Quiz</h1>
+          <p class="subtitle">Practice only • 5 chapters • unlock the next chapter with 80% or higher</p>
+        </div>
+      </div>
+      <div class="warning-card">
+        <strong>Practice Warning</strong>
+        <p>This portal is a practice experience and not the actual ISC2 exam. Accurate performance here helps prepare for the ISC2 Certified in Cybersecurity (CC) exam.</p>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <aside class="nav-panel glass-panel">
+        <div class="nav-heading">
+          <span>Chapter Navigator</span>
+          <small>Select unlocked chapters after passing the prior chapter at 80% or higher.</small>
+        </div>
+        <div id="chapterList" class="chapter-list"></div>
+      </aside>
+
+      <section class="content-panel glass-panel">
+        <div class="page-actions">
+          <button class="control-button primary" id="launchQuizButton">Launch Quiz</button>
+        </div>
+        <div id="pageContent"></div>
+      </section>
+    </main>
+  </div>
+
+  <template id="chapterCardTemplate">
+    <article class="chapter-card">
+      <div>
+        <h3 class="chapter-title"></h3>
+        <p class="chapter-meta"></p>
+      </div>
+      <button class="chapter-action">Start</button>
+    </article>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>

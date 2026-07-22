@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Naija Shield Academy ISC2 Certified in Cybersecurity dedicated exam page." />
+  <title>Naija Shield Academy | Exam</title>
+  <link rel="icon" href="Image/Preview.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="exam">
+  <div class="app-shell exam-shell">
+    <main class="main-grid exam-grid">
+      <aside class="nav-panel glass-panel">
+        <div class="nav-heading">
+          <span>Chapter Navigator</span>
+          <small>Pass each chapter with 80% to unlock the next one.</small>
+        </div>
+        <div id="chapterList" class="chapter-list"></div>
+      </aside>
+
+      <section class="content-panel glass-panel exam-panel">
+        <div class="page-actions exam-actions">
+          <a class="control-button" href="index.html">Home</a>
+        </div>
+        <div id="pageContent"></div>
+      </section>
+    </main>
+  </div>
+
+  <template id="chapterCardTemplate">
+    <article class="chapter-card">
+      <div>
+        <h3 class="chapter-title"></h3>
+        <p class="chapter-meta"></p>
+      </div>
+      <button class="chapter-action">Start</button>
+    </article>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
