@@ -844,11 +844,16 @@ function saveState() {
 }
 
 function navigateToExam(chapterId) {
-  if (chapterId) {
-    window.location.href = `exam.html?chapter=${chapterId}`;
+  const url = chapterId ? `exam.html?chapter=${chapterId}` : 'exam.html';
+  if (pageType === 'exam') {
+    window.location.href = url;
     return;
   }
-  window.location.href = 'exam.html';
+
+  const newTab = window.open(url, '_blank');
+  if (!newTab) {
+    window.location.href = url;
+  }
 }
 
 function openQuizPage() {
@@ -902,10 +907,19 @@ function renderChapters() {
     title.textContent = `Chapter ${chapter.id}: ${chapter.title}`;
     const status = getChapterStatus(chapter);
     meta.textContent = `${chapter.questions.length} questions • ${status}`;
-    button.textContent = status === 'Locked' ? 'Locked' : 'Start';
+    button.textContent = status === 'Locked'
+      ? 'Locked'
+      : pageType === 'exam' && state.currentChapterId === chapter.id
+        ? 'Close'
+        : 'Start';
     button.disabled = status === 'Locked';
     button.addEventListener('click', () => {
       if (pageType === 'exam') {
+        if (state.currentChapterId === chapter.id) {
+          state.currentChapterId = null;
+          renderChapters();
+          return;
+        }
         startChapter(chapter.id);
       } else {
         navigateToExam(chapter.id);
@@ -917,11 +931,64 @@ function renderChapters() {
       badge.className = 'stat-pill';
       badge.style.background = 'rgba(255,255,255,0.06)';
       badge.innerHTML = `<strong>${state.completed[chapter.id].score}%</strong><span>${state.completed[chapter.id].score >= 80 ? 'Score' : 'Score'}</span>`;
-      card.querySelector('.chapter-card').appendChild(badge);
+      card.querySelector('.chapter-summary').appendChild(badge);
+    }
+
+    const chapterCard = card.querySelector('.chapter-card');
+    chapterCard.dataset.chapterId = chapter.id;
+    const body = card.querySelector('.chapter-body');
+    if (pageType === 'exam' && state.currentChapterId === chapter.id && body) {
+      chapterCard.classList.add('expanded');
+      renderChapterInCard(chapter, body);
+    } else if (body) {
+      chapterCard.classList.remove('expanded');
+      body.innerHTML = '';
     }
 
     chapterList.appendChild(card);
   });
+}
+
+function renderChapterInCard(chapter, container) {
+  const question = chapter.questions[state.currentQuestionIndex];
+  container.innerHTML = `
+    <div class="page-heading">
+      <h2>Chapter ${chapter.id}: ${chapter.title}</h2>
+      <p>${chapter.description}</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-pill"><strong>${state.currentQuestionIndex + 1}/${chapter.questions.length}</strong><span>Question</span></div>
+      <div class="stat-pill"><strong>${chapter.questions.length}</strong><span>Questions in chapter</span></div>
+      <div class="stat-pill"><strong>${Object.keys(state.answers).length}</strong><span>Answered</span></div>
+    </div>
+    <div class="question-card">
+      <h3>${formatQuestionText(question, state.currentQuestionIndex)}</h3>
+      <div class="options-grid"></div>
+    </div>
+    <div class="controls-row">
+      <button class="control-button" data-action="prev">Previous</button>
+      <button class="control-button primary" data-action="next">${state.currentQuestionIndex === chapter.questions.length - 1 ? 'Finish Chapter' : 'Next Question'}</button>
+    </div>
+  `;
+
+  const optionsGrid = container.querySelector('.options-grid');
+  question.choices.forEach((choice, index) => {
+    const button = document.createElement('button');
+    button.className = 'option-button';
+    button.innerText = `${String.fromCharCode(65 + index)}. ${choice}`;
+    button.addEventListener('click', () => selectAnswer(index));
+    if (state.answers[state.currentQuestionIndex] === index) {
+      button.classList.add('selected');
+    }
+    optionsGrid.appendChild(button);
+  });
+
+  const prevButton = container.querySelector('[data-action="prev"]');
+  const nextButton = container.querySelector('[data-action="next"]');
+  prevButton.disabled = state.currentQuestionIndex === 0;
+  nextButton.disabled = state.answers[state.currentQuestionIndex] == null;
+  prevButton.addEventListener('click', goPrevious);
+  nextButton.addEventListener('click', goNext);
 }
 
 function renderWelcome() {
@@ -961,6 +1028,11 @@ function renderChapter() {
   const chapter = currentChapter();
   if (!chapter) {
     renderWelcome();
+    return;
+  }
+
+  if (pageType === 'exam') {
+    renderChapters();
     return;
   }
 
@@ -1039,8 +1111,8 @@ function completeChapter() {
   };
 
   saveState();
-  renderCompletion(chapter, percentage, correct);
   renderChapters();
+  renderCompletion(chapter, percentage, correct);
 }
 
 if (launchQuizButton) {
@@ -1053,7 +1125,7 @@ if (homeButton) {
 
 function renderCompletion(chapter, score, correct) {
   const passed = score >= 80;
-  pageContent.innerHTML = `
+  const completionHtml = `
     <div class="page-heading">
       <h2>Chapter ${chapter.id} Complete</h2>
       <p>${chapter.title}</p>
@@ -1064,13 +1136,28 @@ function renderCompletion(chapter, score, correct) {
       <p>${passed ? 'Great work! This chapter is unlocked for the next one.' : 'You need at least 80% to move to the next chapter. Retry to improve your score.'}</p>
     </div>
     <div class="controls-row">
-      <button class="control-button primary" id="retryButton">${passed ? 'Review Chapter' : 'Retry Chapter'}</button>
-      <button class="control-button" id="returnButton">Back to Chapters</button>
+      <button class="control-button primary" data-action="retry">${passed ? 'Review Chapter' : 'Retry Chapter'}</button>
+      <button class="control-button" data-action="return">Back to Chapters</button>
     </div>
   `;
 
-  document.getElementById('retryButton').addEventListener('click', () => startChapter(chapter.id));
-  document.getElementById('returnButton').addEventListener('click', () => {
+  if (pageType === 'exam' && chapterList) {
+    const chapterCard = chapterList.querySelector(`.chapter-card[data-chapter-id="${chapter.id}"]`);
+    const body = chapterCard?.querySelector('.chapter-body');
+    if (body) {
+      body.innerHTML = completionHtml;
+      body.querySelector('[data-action="retry"]').addEventListener('click', () => startChapter(chapter.id));
+      body.querySelector('[data-action="return"]').addEventListener('click', () => {
+        state.currentChapterId = null;
+        renderChapters();
+      });
+      return;
+    }
+  }
+
+  pageContent.innerHTML = completionHtml;
+  document.querySelector('#retryButton')?.addEventListener('click', () => startChapter(chapter.id));
+  document.querySelector('#returnButton')?.addEventListener('click', () => {
     state.currentChapterId = null;
     if (pageType === 'exam') {
       goHome();
