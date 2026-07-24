@@ -869,24 +869,14 @@ function getChapterById(id) {
 }
 
 function getUnlockedChapters() {
-  const unlocked = [1];
-  chapters.forEach((chapter) => {
-    if (chapter.id === 1) return;
-    const prev = getChapterById(chapter.id - 1);
-    const completed = state.completed[prev.id];
-    const passed = completed && completed.score >= 80;
-    if (passed) unlocked.push(chapter.id);
-  });
-  return unlocked;
+  return chapters.map((chapter) => chapter.id);
 }
 
 function getChapterStatus(chapter) {
   if (state.completed[chapter.id]) {
     return state.completed[chapter.id].score >= 80 ? 'Passed' : 'Failed';
   }
-  if (chapter.id === 1) return 'Ready';
-  const previous = state.completed[chapter.id - 1];
-  return previous && previous.score >= 80 ? 'Ready' : 'Locked';
+  return 'Ready';
 }
 
 function formatQuestionText(question, index) {
@@ -1177,18 +1167,10 @@ if (pageType === 'exam') {
   const chapterId = Number(params.get('chapter'));
   const chapter = getChapterById(chapterId);
 
-  if (chapter && getUnlockedChapters().includes(chapterId)) {
+  if (chapter) {
     startChapter(chapterId);
   } else {
     renderWelcome();
-    if (chapter && chapterId !== 0) {
-      pageContent.innerHTML += `
-        <div class="result-banner fail" style="margin-top:24px;">
-          <strong>Chapter unavailable</strong>
-          <p>Chapter ${chapterId} is locked until you pass the previous chapter with 80% or higher.</p>
-        </div>
-      `;
-    }
   }
 } else {
   renderWelcome();
